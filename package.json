@@ -1,0 +1,18 @@
+{
+  "name": "morningcaptions",
+  "version": "1.0.0",
+  "description": "A project intended to transcribe audio from York Tech's morning announcements into Closed Captions.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {},
+  "keywords": []
+}

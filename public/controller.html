@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morning Captions - Controller</title>
+</head>
+<body class="controller-page">
+    <div class="controller">
+        <h1>Morning Captions</h1>
+        <p>Caption Controller</p>
+
+        <label for="captionInput">
+            Enter Caption
+        </label>
+
+        <textarea id="captionInput" placeholder="Type a caption here..."></textarea>
+
+        <div class="buttons">
+            <button id="sendButton">Send Caption</button>
+            <button id="clearButton">Clear Caption</button>
+        </div>
+
+        <p id="status">Connecting...</p>
+
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="controller.js"></script>
+</body>
+</html>
