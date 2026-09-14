@@ -54,3 +54,21 @@ button {
 #status {
     margin-top: 20px;
 }
+/* -------------------------------*/
+/*        CAPTION DISPLAY         */
+/* -------------------------------*/
+
+.display-page {
+    background: transparent;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+#captionBox {
+    width: 100%;
+    padding: 50px;
+    text-align: center;
+}

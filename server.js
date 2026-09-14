@@ -1,21 +1,43 @@
+const { time } = require('console');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const { text } = require('stream/consumers');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+// polished captions
+
+let currentCaption = "";
+const captionHistory = [];
+const MAX_HISTORY = 20;
 
 app.use(express.static('public'));
 
 io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
 
+    socket.emit("caption-update", currentCaption);
+
+    socket.emit("caption-history", captionHistory);
+
     socket.on("send-caption", (caption) => {
+        currentCaption = caption;
+        
         console.log("Caption:", caption);
 
+        captionHistory.unshift({
+            text: caption,
+            time: new Date().toLocaleTimeString()
+        });
+
+        if (captionHistory.length > MAX_HISTORY) {
+            captionHistory.pop();
+        }
         io.emit("caption-update", caption);
     });
 
@@ -29,7 +51,6 @@ io.on("connection", (socket) => {
 });
 server.listen(PORT, () => {
     console.log(`Morning Captions running at:`);
-    console.log(`http://localhost:${PORT}`);
     console.log(`Controller: http://localhost:${PORT}/controller.html`);
     console.log(`Display: http://localhost:${PORT}/display.html`);
 });
