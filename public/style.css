@@ -72,3 +72,48 @@ button {
     padding: 50px;
     text-align: center;
 }
+#captionText {
+    white-space: pre-line;
+}
+.controller-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+.caption-input-section {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+}
+.input-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.history-text {
+    white-space: pre-line;
+}
+
+.history-time {
+    font-size: 13px;
+    color: #777;
+    white-space: nowrap;
+}

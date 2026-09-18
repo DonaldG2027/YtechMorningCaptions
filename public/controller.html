@@ -4,25 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Morning Captions - Controller</title>
+    <link rel="stylesheet" href="style.css"></link>
 </head>
 <body class="controller-page">
     <div class="controller">
-        <h1>Morning Captions</h1>
-        <p>Caption Controller</p>
 
+        <header class="controller-header">
+            <div>
+                <h1>Morning Captions</h1>
+            
+                <p>Caption Controller</p>
+            </div>
+
+            <div id="statusDisplay">
+                🔴 Connecting...
+            </div>
+        </header>
+        <!--Caption Input-->
         <label for="captionInput">
-            Enter Caption
+            Caption Text
         </label>
+        
+        <textarea id="captionInput" placeholder="Type a caption..." autofocus></textarea>
+        <div class="input-info">
+            <span id="characterCount">
+                0
+            </span>
 
-        <textarea id="captionInput" placeholder="Type a caption here..."></textarea>
-
-        <div class="buttons">
-            <button id="sendButton">Send Caption</button>
-            <button id="clearButton">Clear Caption</button>
+            <span>
+                Ctrl + Enter to Send
+            </span>
         </div>
-
-        <p id="status">Connecting...</p>
-
+        <div class="buttons">
+            <button id="sendButton" class="send-button">Send Caption</button>
+            <button id="clearButton" class="clear-button">Clear Display</button>
+        </div>
+        <!--Live Preview-->
+        <section class="preview-section">
+            <h2>Live Preview</h2>
+            <div class="preview-screen">
+                <div id="previewText">
+                    Captions will show up here
+                </div>
+            </div>
+        </section>
+        <!--History-->
+        <section class="history-section">
+            <div class="history-header">
+                <h2>Caption History</h2>
+                <button id="clearHistoryButton">Clear History</button>
+            </div>
+            <div id="captionHistory">
+                <p class="empty-history">
+                    No captions yet.
+                </p>
+            </div>
+        </section>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="controller.js"></script>

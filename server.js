@@ -1,3 +1,4 @@
+const formatCaption = require("./services/captionEngine");
 const { time } = require('console');
 const express = require('express');
 const http = require('http');
@@ -26,7 +27,7 @@ io.on("connection", (socket) => {
     socket.emit("caption-history", captionHistory);
 
     socket.on("send-caption", (caption) => {
-        currentCaption = caption;
+        currentCaption = formatCaption(caption);
         
         console.log("Caption:", caption);
 
@@ -39,9 +40,13 @@ io.on("connection", (socket) => {
             captionHistory.pop();
         }
         io.emit("caption-update", caption);
+
+        io.emit("caption-history", captionHistory)
     });
 
     socket.on("clear-caption", () => {
+        currentCaption = "";
+        
         io.emit("caption-update", "");
     });
 
