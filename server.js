@@ -1,4 +1,4 @@
-const formatCaption = require("./services/captionEngine");
+const { formatCaption }= require("./services/captionEngine");
 const { time } = require('console');
 const express = require('express');
 const http = require('http');

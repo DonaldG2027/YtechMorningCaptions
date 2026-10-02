@@ -1,7 +1,7 @@
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("ffmpeg-static");
 
-const input = "./test/1000100202.mp4";
+const input = "./test/1000100477.mp4";
 const output = "./test/audio.wav";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
