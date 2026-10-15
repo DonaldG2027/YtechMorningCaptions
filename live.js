@@ -44,23 +44,31 @@ async function main() {
 
     let audioBuffer = Buffer.alloc(0);
     let chunkNumber = 0;
+    let transcriptionQueue = Promise.resolve();
 
-    ffmpeg.stdout.on("data", async (data) => {
+    function enqueueTranscription(chunk, number) {
+        transcriptionQueue = transcriptionQueue
+            .then(() => transcribeChunk(
+                chunk,
+                number,
+                transcriber,
+                socket
+            ))
+            .catch(error => {
+                console.error(`Chunk ${number} failed:`, error);
+            });
+    }
+
+    ffmpeg.stdout.on("data", (data) => {
         audioBuffer = Buffer.concat([audioBuffer, data]);
 
         while (audioBuffer.length >= CHUNK_SIZE) {
             const chunk = audioBuffer.subarray(0, CHUNK_SIZE);
-
             audioBuffer = audioBuffer.subarray(CHUNK_SIZE);
 
             chunkNumber++;
 
-            await transcribeChunk(
-                chunk,
-                chunkNumber,
-                transcriber,
-                socket
-            );
+            enqueueTranscription(chunk, chunkNumber);
         }
     });
 
@@ -72,15 +80,14 @@ async function main() {
         console.log(`FFmpeg finished with code ${code}.`);
 
         if (audioBuffer.length > 0) {
+            const finalChunk = audioBuffer;
+            audioBuffer = Buffer.alloc(0);
+            
             chunkNumber++;
 
-            await transcribeChunk(
-                audioBuffer,
-                chunkNumber,
-                transcriber,
-                socket
-            );
+            enqueueTranscription(finalChunk, chunkNumber);
         }
+        await transcriptionQueue;
         socket.disconnect();
         
         console.log("Live transcription finished.");
