@@ -3,7 +3,8 @@ const ffmpegPath = require("ffmpeg-static");
 const { pipeline } = require("@huggingface/transformers");
 const { io } = require("socket.io-client");
 const { splitIntoCaptions } = require("./services/captionEngine");
-const input = "./test/1000100477.mp4"; // change to have it so the input is the stream v-mix provides
+const input = process.env.LIVE_INPUT || "./test/1000100477.mp4";
+const captionServerUrl = process.env.CAPTION_SERVER_URL || "http://localhost:3000";
 
 const SAMPLE_RATE = 16000;
 const CHANNELS = 1;
@@ -21,7 +22,7 @@ async function main() {
     console.log("Whisper ready.");
     console.log("Connecting to caption server...");
 
-    const socket = io("http://localhost:3000");
+    const socket = io(captionServerUrl);
 
     await new Promise((resolve, reject) => {
         socket.once("connect", resolve);

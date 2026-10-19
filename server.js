@@ -1,9 +1,8 @@
 const { formatCaption }= require("./services/captionEngine");
-const { time } = require('console');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const { text } = require('stream/consumers');
+const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
@@ -55,7 +54,15 @@ io.on("connection", (socket) => {
     });
 });
 server.listen(PORT, () => {
+    const networkAddresses = Object.values(os.networkInterfaces())
+        .flat()
+        .filter(address => address && address.family === "IPv4" && !address.internal)
+        .map(address => `http://${address.address}:${PORT}`);
+
     console.log(`Morning Captions running at:`);
     console.log(`Controller: http://localhost:${PORT}/controller.html`);
     console.log(`Display: http://localhost:${PORT}/display.html`);
+    networkAddresses.forEach(address => {
+        console.log(`Network: ${address}/controller.html`);
+    });
 });
