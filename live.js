@@ -3,7 +3,7 @@ const ffmpegPath = require("ffmpeg-static");
 const { pipeline } = require("@huggingface/transformers");
 const { io } = require("socket.io-client");
 const { splitIntoCaptions } = require("./services/captionEngine");
-const input = "./test/1000100477.mp4";
+const input = "./test/1000100477.mp4"; // change to have it so the input is the stream v-mix provides
 
 const SAMPLE_RATE = 16000;
 const CHANNELS = 1;
