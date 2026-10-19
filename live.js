@@ -33,7 +33,6 @@ async function main() {
     console.log("Starting live audio stream...");
 
     const ffmpeg = childProcess.spawn(ffmpegPath, [
-        "-re",
         "-i", input,
         "-vn",
         "-acodec", "pcm_s16le",
