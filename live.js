@@ -142,10 +142,7 @@ async function transcribeChunk(buffer, chunkNumber, transcriber, socket) {
         console.log(`Skipped chunk ${chunkNumber} (RMS${rms.toFixed(5)} < ${minChunkRms})`);
         return;
     } 
-    const result = await transcriber(audioData, {
-        task: "transcribe",
-        language: "english",
-    });
+    const result = await transcriber(audioData);
 
     const text = result.text.trim();
 
