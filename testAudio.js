@@ -1,9 +1,13 @@
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("ffmpeg-static");
+const path = require("path");
 
-const input = "./test/10.14.mp4";
+const input = "./test/20260922_231023.mp4";
 const output = "./test/audio.wav";
 
+console.log("Working directory:", process.cwd());
+console.log("Input file path:", path.resolve(input));
+console.log("Output file path:", path.resolve(output));
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 console.log("Extracting audio...");

@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 
 // polished captions
 
-let currentCaption = "";
+let currentCaption =  "";
 const captionHistory = [];
 const MAX_HISTORY = 20;
 
@@ -26,19 +26,20 @@ io.on("connection", (socket) => {
     socket.emit("caption-history", captionHistory);
 
     socket.on("send-caption", (caption) => {
-        currentCaption = formatCaption(caption);
+        const formattedCaption = formatCaption(caption);
         
+        currentCaption = formattedCaption;
         console.log("Caption:", caption);
 
         captionHistory.unshift({
-            text: caption,
+            text: formattedCaption,
             time: new Date().toLocaleTimeString()
         });
 
         if (captionHistory.length > MAX_HISTORY) {
             captionHistory.pop();
         }
-        io.emit("caption-update", caption);
+        io.emit("caption-update", formattedCaption);
 
         io.emit("caption-history", captionHistory)
     });

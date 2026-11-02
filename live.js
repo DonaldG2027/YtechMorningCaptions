@@ -5,6 +5,9 @@ const { io } = require("socket.io-client");
 const { splitIntoCaptions } = require("./services/captionEngine");
 const input = process.env.LIVE_INPUT || "./test/audio.wav";
 const captionServerUrl = process.env.CAPTION_SERVER_URL || "http://localhost:3000";
+const inputFormat = (process.env.LIVE_INPUT_FORMAT || "auto").toLowerCase();
+const whisperModel = process.env.WHISPER_MODEL || "Xenova/whisper-base.en";
+const minChunkRms = Number(process.env.MIN_CHUNK_RMS || 0.0075);
 
 const SAMPLE_RATE = 16000;
 const CHANNELS = 1;
@@ -13,11 +16,43 @@ const CHUNK_SECONDS = 5;
 
 const CHUNK_SIZE = SAMPLE_RATE * CHANNELS * BYTES_PER_SAMPLE * CHUNK_SECONDS;
 
+function buildFfmpegArgs() {
+    if (inputFormat === "dshow") {
+        return [
+            "-f", "dshow",
+            "-i", input,
+            "-vn",
+            "-acodec", "pcm_s16le",
+            "-ar", "16000",
+            "-ac", "1",
+            "-f", "s16le",
+            "pipe:1"
+        ];
+    }
+
+    return [
+        "-fflags", "nobuffer",
+        "-flags", "low_delay",
+        "-i", input,
+        "-vn",
+        "-acodec", "pcm_s16le",
+        "-ar", "16000",
+        "-ac", "1",
+        "-f", "s16le",
+        "pipe:1"
+    ];
+}
+
+function getRms(floatArray) {
+    let sum = 0;
+    for (let i = 0; i < floatArray.length; i++) sum += floatArray[i] * floatArray[i];
+    return Math.sqrt(sum / floatArray.length);
+}
 
 async function main() {
     console.log("Loading Whisper model...");
 
-    const transcriber = await pipeline("automatic-speech-recognition", "Xenova/whisper-tiny.en");
+    const transcriber = await pipeline("automatic-speech-recognition", whisperModel);
 
     console.log("Whisper ready.");
     console.log("Connecting to caption server...");
@@ -32,15 +67,7 @@ async function main() {
     console.log("Connected to caption server.");
     console.log("Starting live audio stream...");
 
-    const ffmpeg = childProcess.spawn(ffmpegPath, [
-        "-i", input,
-        "-vn",
-        "-acodec", "pcm_s16le",
-        "-ar", "16000",
-        "-ac", "1",
-        "-f", "s16le",
-        "pipe:1"
-    ]);
+    const ffmpeg = childProcess.spawn(ffmpegPath, buildFfmpegArgs());
 
     let audioBuffer = Buffer.alloc(0);
     let chunkNumber = 0;
@@ -109,6 +136,12 @@ async function transcribeChunk(buffer, chunkNumber, transcriber, socket) {
         audioData[i] = int16Samples[i] / 32768;
     }
 
+    const rms = getRms(audioData);
+
+    if (rms < minChunkRms) {
+        console.log(`Skipped chunk ${chunkNumber} (RMS${rms.toFixed(5)} < ${minChunkRms})`);
+        return;
+    } 
     const result = await transcriber(audioData);
 
     const text = result.text.trim();
