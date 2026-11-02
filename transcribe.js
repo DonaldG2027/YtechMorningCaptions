@@ -1,85 +1,120 @@
 const fs = require("fs");
-const childProcess = require("node:child_process");
+const path = require("path");
+const { spawnSync } = require("node:child_process");
 const { io } = require("socket.io-client");
 const { splitIntoCaptions } = require("./services/captionEngine");
-const wavefile = require("wavefile");
-const { pipeline } = require("@huggingface/transformers");
+
+const WHISPER_DIR = path.join(
+    process.env.USERPROFILE,
+    "OneDrive - York County School of Technology",
+    "Documents",
+    "whisper.cpp"
+);
+
+const WHISPER_EXE = path.join(
+    WHISPER_DIR,
+    "build",
+    "bin",
+    "Release",
+    "whisper-cli.exe"
+);
+
+const MODEL_PATH = path.join(WHISPER_DIR, "ggml-base.en.bin");
+const AUDIO_PATH = path.resolve("./test/audio.wav");
+const TRANSCRIPT_PATH = path.resolve("./test/native-transcript.txt");
+
 
 async function main() {
-    const server = childProcess.spawn("node", ["server.js"], { stdio: "inherit" });
-
-    console.log("Loading Whisper model...");
-
-    const transcriber = await pipeline(
-        "automatic-speech-recognition",
-        "Xenova/whisper-tiny.en"
-    );
-
-    console.log("Loading audio...");
-    
-    const buffer = fs.readFileSync("./test/audio.wav");
-    const wav = new wavefile.WaveFile(buffer);
-
-    // 16 kHz audio since thats what whisper expects
-    wav.toSampleRate(16000);
-
-    // convert PC audio to Float32
-    wav.toBitDepth("32f");
-
-    let audioData = wav.getSamples();
-
-    if (Array.isArray(audioData)) {
-        audioData = audioData[0];
+    for (const file of [WHISPER_EXE, MODEL_PATH, AUDIO_PATH]) {
+        if (!fs.existsSync(file)) {
+            throw new Error(`File not found: ${file}`);
+        }
     }
 
-    console.log("Transcribing...");
+    console.log("Running native Whisper...");
+    console.log(`Audio: ${AUDIO_PATH}`);
 
-    const result = await transcriber(audioData, {
-        chunk_length_s: 30,
-        stride_length_s: 5
-    });
+    const result = spawnSync(
+        WHISPER_EXE,
+        [
+            "-m", MODEL_PATH,
+            "-f", AUDIO_PATH,
+            "-otxt",
+            "-of", TRANSCRIPT_PATH.replace(/\.txt$/i, "")
+        ],
+        {
+            cwd: WHISPER_DIR,
+            encoding: "utf8",
+            windowsHide: true
+        }
+    );
 
-    const captions = splitIntoCaptions(result.text);
-    
+    if (result.error) {
+        throw result.error;
+    }
+
+    if (result.stdout) console.log(result.stdout);
+    if (result.stderr) console.log(result.stderr);
+
+    if (result.status !== 0) {
+        throw new Error(`Whisper exited with code ${result.status}`);
+    }
+
+    if (!fs.existsSync(TRANSCRIPT_PATH)) {
+        throw new Error(`Whisper did not create: ${TRANSCRIPT_PATH}`);
+    }
+
+    const transcript = fs.readFileSync(TRANSCRIPT_PATH, "utf8").trim();
+
+    if (!transcript) {
+        throw new Error("Whisper returned an empty transcript.");
+    }
+
+    const captions = splitIntoCaptions(transcript);
+
     console.log("\n--- GENERATED CAPTIONS ---\n");
-
     captions.forEach((caption, index) => {
         console.log(`[Caption ${index + 1}]`);
         console.log(caption);
         console.log();
     });
 
-    // socket io stuff
     const socket = io("http://localhost:3000");
-    await new Promise ((resolve, reject) => {
-        socket.once("connect", resolve);
-        socket.once("connect_error", reject);
-    });
-    console.log("Connected to captions server. Sending captions...");
 
-    function getCaptionDurationMs(caption) {
-    const words = caption.trim().split(/\s+/).length;
-    const endsSentence = /[.!?]["')\]]?$/.test(caption.trim());
+    try {
+        await new Promise((resolve, reject) => {
+            socket.once("connect", resolve);
+            socket.once("connect_error", reject);
+        });
 
-    const duration = 1200 + words * 300 + (endsSentence ? 500 : 0);
+        console.log("Connected. Sending captions...");
 
-    return Math.min(6000, Math.max(2500, duration));
-}
+        function getCaptionDurationMs(caption) {
+            const words = caption.trim().split(/\s+/).length;
+            const endsSentence = /[.!?]["')\]]?$/.test(caption.trim());
+            const duration = 1200 + words * 300 + (endsSentence ? 500 : 0);
 
-    for (const caption of captions) {
-        const duration = getCaptionDurationMs(caption);
+            return Math.min(6000, Math.max(2500, duration));
+        }
 
-        socket.emit("send-caption", caption);
-        console.log(`Showing caption for ${duration / 1000}s`);
+        for (const caption of captions) {
+            const duration = getCaptionDurationMs(caption);
 
-        await new Promise(resolve => setTimeout(resolve, duration));
+            socket.emit("send-caption", caption);
+            console.log(`Showing caption for ${duration / 1000}s`);
+
+            await new Promise(resolve => setTimeout(resolve, duration));
+        }
+
+        console.log("Finished sending captions.");
+    } finally {
+        socket.disconnect();
     }
-    
-    socket.disconnect();
-    console.log("Finished sending captions.")
 }
+
 
 main().catch(error => {
     console.error("\n Transcription failed:");
     console.error(error);
+    process.exitCode = 1;
 });

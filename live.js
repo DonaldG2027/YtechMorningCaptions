@@ -3,7 +3,7 @@ const ffmpegPath = require("ffmpeg-static");
 const { pipeline } = require("@huggingface/transformers");
 const { io } = require("socket.io-client");
 const { splitIntoCaptions } = require("./services/captionEngine");
-const input = process.env.LIVE_INPUT || "./test/1000100477.mp4";
+const input = process.env.LIVE_INPUT || "./test/audio.wav";
 const captionServerUrl = process.env.CAPTION_SERVER_URL || "http://localhost:3000";
 
 const SAMPLE_RATE = 16000;
@@ -72,8 +72,8 @@ async function main() {
         }
     });
 
-    ffmpeg.stderr.on("data", () => {
-        // ignoring ffmpeg output status
+    ffmpeg.stderr.on("data", (data) => {
+        process.stderr.write(data);
     });
 
     ffmpeg.on("close", async (code) => {
