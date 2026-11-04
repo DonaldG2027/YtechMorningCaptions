@@ -1,0 +1,2 @@
+(11/3):
+Just trying to get whisper build onto the machine but wifi issues and microphone being weird got in the way since we need the former for downloading the build and the microphone for getting audio to use for ttranscription.
